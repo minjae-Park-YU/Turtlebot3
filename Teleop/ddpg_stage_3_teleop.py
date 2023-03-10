@@ -1,4 +1,4 @@
-#!/home/ubuntu/anaconda3/envs/tbtorch/bin/python3
+#!/home/ubuntu/anaconda3/envs/son/bin/python3
 # Authors: Junior Costa de Jesus #
 
 import rospy
@@ -50,8 +50,10 @@ LEARNING_RATE = 0.001
 GAMMA = 0.99
 TAU = 0.001
 
-MAX_EPISODES = 1001
-MAX_STEPS = 300
+start_episode = 1
+
+MAX_EPISODES = 1000001
+MAX_STEPS = 1000
 MAX_BUFFER = 20000
 rewards_all_episodes = []
 
@@ -116,7 +118,7 @@ if __name__ == '__main__':
     
     past_action = np.zeros(ACTION_DIMENSION)
     
-    for ep in range(MAX_EPISODES):
+    for ep in range(start_episode, MAX_EPISODES):
         if ep == MAX_EPISODES - 1:
             offline_data_final = True
         done = False
@@ -142,7 +144,7 @@ if __name__ == '__main__':
             offline_d.append(done)
             offline_n_s.append(next_state)
             
-            print("State: ", state, " Next state: ", next_state, " original_reward: ", original_rewards, " done: ", done)
+            #print("State: ", state, " Next state: ", next_state, " original_reward: ", original_rewards, " done: ", done)
             # print('action', action,'r',reward)
             past_action = action
 
@@ -151,7 +153,9 @@ if __name__ == '__main__':
              # (22.07.22. kwon) reward_mode 별 ram 에 추가해야하는 immediate reward 로 list 생성 -
             reward_arg = [original_reward, new_reward, new_rewards]
 
-
+            if goalbox:
+                goal = True
+            
             state = copy.deepcopy(next_state)
             prev_cord = copy.deepcopy(cord)
             
@@ -178,13 +182,14 @@ if __name__ == '__main__':
                 break
 
         print("saving completed!")
-        if offline_data_final:
+    
+        if goalbox:
             offline_data = {'state' : offline_s, 'action' : offline_a, 'reward' : offline_r, 'done' : offline_d, 'next_state' : offline_n_s}
-            df_name = "offline_datasets ep" + str(ep) + " Ensemble " + str(ensemble) + " data num " + str(offline_count) + ".csv" 
+            df_name = "offline_datasets ep" + str(ep) + ".csv" 
             df =  pd.DataFrame(offline_data)
             if not os.path.exists(dirPath + "/Offline Datasets/" + world):
                 os.makedirs(dirPath + "/Offline Datasets/" + world)
-            df5.to_csv(dirPath + "/Offline Datasets/" + world + "/" +df_name) 
+            df.to_csv(dirPath + "/Offline Datasets/" + world + "/" +df_name) 
             
         #if ep % 1000 == 0 and ep > 0:
             #df1_name = "reward_ep" + str(ep) + " Ensemble_" + str(ensemble) + ".csv"
@@ -192,7 +197,7 @@ if __name__ == '__main__':
             #df3_name = "actor_loss_ep" + str(ep) + " Ensemble " + str(ensemble) + ".csv"
             #df4_name = "critic_loss_ep" + str(ep) + " Ensemble " + str(ensemble) + ".csv"
 
-            print("data saving...")
+    print("data saving...")
             #df1 = pd.DataFrame(reward_list, columns=['reward'])
             #df2 = pd.DataFrame(new_reward_list, columns=['reward'])
             #df3 = pd.DataFrame(actor_loss, columns=['loss'])
@@ -214,7 +219,7 @@ if __name__ == '__main__':
             #df3.to_csv(dirPath + "/Loss/" + world + '/Actor Loss/' + df3_name)
             #df4.to_csv(dirPath + "/Loss/" + world + '/Critic Loss/' + df4_name)
 
-            print("data saving completed!!")
+    print("data saving completed!!")
 
 print('Completed Training')
 print('processing time : ', time.time() - start_time)
